@@ -20,7 +20,8 @@ function localDate(offset = 0) {
 }
 
 function nights() {
-    return Math.max(0, (Date.parse(`${byId('departure').value}T00:00:00Z`) - Date.parse(`${byId('arrival').value}T00:00:00Z`)) / 86400000);
+    const duration = (Date.parse(`${byId('departure').value}T00:00:00Z`) - Date.parse(`${byId('arrival').value}T00:00:00Z`)) / 86400000;
+    return Number.isFinite(duration) ? Math.max(0, duration) : 0;
 }
 
 function showError(id, message) {
@@ -89,7 +90,9 @@ function renderCatalog() {
 
 function renderSummary() {
     const duration = nights();
-    byId('summary-dates').textContent = `${formatDate(byId('arrival').value)} - ${formatDate(byId('departure').value)} / ${duration} ${duration === 1 ? 'notte' : 'notti'}`;
+    byId('summary-dates').textContent = byId('arrival').value && byId('departure').value
+        ? `${formatDate(byId('arrival').value)} - ${formatDate(byId('departure').value)} / ${duration} ${duration === 1 ? 'notte' : 'notti'}`
+        : 'Date del soggiorno da definire';
     const selections = [...state.selected.values()];
     byId('selected-rooms').innerHTML = selections.length ? selections.map(({ camera, numeroOspiti }) => `<div class="selection-row">
         <div class="selection-top"><div><strong>${escapeHtml(camera.appartamentoNome)} / ${escapeHtml(camera.numero)}</strong><p>${escapeHtml(typeLabels[camera.tipo])}</p></div><button class="icon-button" data-remove-id="${camera.id}" title="Rimuovi camera" aria-label="Rimuovi camera ${escapeHtml(camera.numero)}">${icon('x')}</button></div>
@@ -280,7 +283,7 @@ byId('arrival').value = localDate(7);
 byId('departure').min = localDate(8);
 byId('departure').value = localDate(9);
 byId('arrival').addEventListener('change', () => {
-    if (!byId('arrival').value) return;
+    if (!byId('arrival').value) { invalidateSearch(); return; }
     const nextDay = new Date(`${byId('arrival').value}T12:00:00`);
     nextDay.setDate(nextDay.getDate() + 1);
     const minimum = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, '0')}-${String(nextDay.getDate()).padStart(2, '0')}`;
@@ -289,7 +292,7 @@ byId('arrival').addEventListener('change', () => {
     byId('departure').setCustomValidity('');
     invalidateSearch();
 });
-byId('departure').addEventListener('change', () => { if (byId('departure').value) { byId('departure').setCustomValidity(''); invalidateSearch(); } });
+byId('departure').addEventListener('change', () => { byId('departure').setCustomValidity(''); invalidateSearch(); });
 byId('guests').addEventListener('change', invalidateSearch);
 for (const id of ['apartment-filter', 'type-filter']) byId(id).addEventListener('change', renderCatalog);
 byId('search-form').addEventListener('submit', (event) => { event.preventDefault(); searchRooms(); });

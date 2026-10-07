@@ -15,7 +15,16 @@ Da PowerShell, nella cartella del progetto:
 Se BookingApplication e gia in esecuzione in VS Code, arrestarla e riavviarla
 per caricare le nuove classi e dipendenze. Avviare una sola istanza per database.
 L'applicazione usa la porta 8081 per evitare il conflitto con la porta 8080.
-L'indirizzo e http://localhost:8081/camere.
+L'interfaccia grafica e http://localhost:8081/.
+Le API JSON rimangono disponibili, ad esempio http://localhost:8081/camere.
+
+La pagina usa HTML, CSS e JavaScript nella cartella `src/main/resources/static`.
+Permette di consultare gli appartamenti, filtrare le camere, cercare la disponibilita
+per date e ospiti e prenotare piu camere. La scheda Prenotazioni mostra lo storico
+e permette di annullare un soggiorno, previa conferma.
+I dati e i controlli applicativi continuano a essere gestiti dalle API Spring Boot.
+Le fotografie sono illustrative; immagini Unsplash, font Google Fonts e icone Lucide
+richiedono una connessione Internet. Le foto non rappresentano gli appartamenti reali.
 
 H2 salva i dati nella cartella locale `data/`, esclusa da Git.
 I dati rimangono dopo il riavvio. `ddl-auto=update` e una configurazione
