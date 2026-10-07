@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#176b53">
+    <title>Booking | Appartamenti e prenotazioni</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script defer src="/app.js"></script>
+</head>
+<body>
+    <a class="skip-link" href="#main">Vai al contenuto</a>
+    <header class="app-header">
+        <div class="header-inner">
+            <a class="brand" href="/" aria-label="Booking, pagina iniziale"><span class="brand-mark"><i data-lucide="house"></i></span>Booking<span class="brand-location">B&amp;B / Firenze</span></a>
+            <span class="header-note"><i data-lucide="map-pin"></i> Firenze, Italia</span>
+        </div>
+    </header>
+    <main id="main" class="page">
+        <div class="page-heading"><div><p class="eyebrow">IL TUO B&amp;B</p><h1>Appartamenti e soggiorni</h1></div><span class="catalog-count" id="catalog-count">Caricamento...</span></div>
+        <div class="tabs" role="tablist" aria-label="Viste">
+            <button class="tab active" id="catalog-tab" role="tab" aria-selected="true" aria-controls="catalog-panel"><i data-lucide="bed-double"></i> Appartamenti</button>
+            <button class="tab" id="bookings-tab" role="tab" aria-selected="false" aria-controls="bookings-panel" tabindex="-1"><i data-lucide="calendar-check"></i> Prenotazioni <span id="bookings-count" class="count">0</span></button>
+        </div>
+        <div class="notice error" id="global-error" role="alert" hidden><span id="global-error-text"></span><button class="text-button" id="retry-load"><i data-lucide="refresh-cw"></i> Riprova</button></div>
+        <section id="catalog-panel" role="tabpanel" aria-labelledby="catalog-tab">
+            <form class="search-form" id="search-form">
+                <div class="field"><label for="arrival">Arrivo</label><input id="arrival" name="dataArrivo" type="date" required></div>
+                <div class="field"><label for="departure">Partenza</label><input id="departure" name="dataPartenza" type="date" required></div>
+                <div class="field"><label for="guests">Ospiti per camera</label><select id="guests"><option value="1">1 ospite</option><option value="2">2 ospiti</option><option value="3">3 ospiti</option><option value="4">4 ospiti</option></select></div>
+                <button class="button primary search-button" type="submit" id="search-button"><i data-lucide="search"></i> Cerca disponibilit&agrave;</button>
+            </form>
+            <div class="catalog-toolbar">
+                <p id="results-label" aria-live="polite">Catalogo camere</p>
+                <div class="filters"><label class="sr-only" for="apartment-filter">Appartamento</label><select id="apartment-filter"><option value="">Tutti gli appartamenti</option></select><label class="sr-only" for="type-filter">Tipo di camera</label><select id="type-filter"><option value="">Tutte le camere</option><option value="SINGOLA">Singole</option><option value="DOPPIA">Doppie</option><option value="FAMILIARE">Familiari</option></select><button class="icon-button" id="reset-filters" title="Ripristina filtri" aria-label="Ripristina filtri"><i data-lucide="rotate-ccw"></i></button></div>
+            </div>
+            <div id="search-error" class="notice error" role="alert" hidden></div>
+            <div class="catalog-layout">
+                <div id="properties" class="properties" aria-live="polite"><div class="empty-state"><i data-lucide="loader-circle"></i><h2>Caricamento degli appartamenti</h2></div></div>
+                <aside class="booking-summary" aria-labelledby="summary-title">
+                    <div class="summary-heading"><i data-lucide="receipt-text"></i><h2 id="summary-title">Il tuo soggiorno</h2></div>
+                    <p class="summary-dates" id="summary-dates"></p>
+                    <div id="selected-rooms"><p class="muted empty-selection">Nessuna camera selezionata</p></div>
+                    <div class="summary-total"><span>Totale stimato</span><strong id="estimated-total">&euro; 0,00</strong></div>
+                    <button class="button primary full-width" id="open-booking" disabled><i data-lucide="arrow-right"></i> Prenota</button>
+                </aside>
+            </div>
+        </section>
+        <section id="bookings-panel" role="tabpanel" aria-labelledby="bookings-tab" hidden>
+            <div class="bookings-heading"><div><h2>Le prenotazioni</h2><p id="booking-list-label" class="muted">Tutti i soggiorni</p></div><button class="button secondary" id="refresh-bookings"><i data-lucide="refresh-cw"></i> Aggiorna</button></div>
+            <div id="bookings-error" class="notice error" role="alert" hidden></div>
+            <div id="booking-list"></div>
+        </section>
+        <footer class="page-footer"><span>Booking B&amp;B</span><span>Appartamenti Aurora &amp; Giardino &middot; Firenze</span></footer>
+    </main>
+    <dialog id="booking-dialog" aria-labelledby="booking-dialog-title">
+        <div class="dialog-heading"><div><p class="eyebrow">NUOVO SOGGIORNO</p><h2 id="booking-dialog-title">Conferma la prenotazione</h2></div><button class="icon-button" id="close-booking" title="Chiudi" aria-label="Chiudi"><i data-lucide="x"></i></button></div>
+        <div id="checkout-summary" class="checkout-summary"></div>
+        <form id="booking-form">
+            <div class="guest-fields"><div class="field"><label for="guest-name">Nome</label><input id="guest-name" name="nome" autocomplete="given-name" maxlength="100" required></div><div class="field"><label for="guest-surname">Cognome</label><input id="guest-surname" name="cognome" autocomplete="family-name" maxlength="100" required></div><div class="field"><label for="guest-email">Email</label><input id="guest-email" name="email" type="email" autocomplete="email" maxlength="254" required></div><div class="field"><label for="guest-phone">Telefono</label><input id="guest-phone" name="telefono" type="tel" autocomplete="tel" maxlength="30" required></div></div>
+            <div id="booking-error" class="notice error" role="alert" hidden></div>
+            <div class="dialog-actions"><button type="button" class="button secondary" id="back-to-catalog">Indietro</button><button type="submit" class="button primary" id="submit-booking"><i data-lucide="check"></i> Conferma prenotazione</button></div>
+        </form>
+    </dialog>
+    <dialog id="cancel-dialog" aria-labelledby="cancel-dialog-title">
+        <div class="dialog-heading"><h2 id="cancel-dialog-title">Annullare la prenotazione?</h2><button class="icon-button" id="close-cancel" title="Chiudi" aria-label="Chiudi"><i data-lucide="x"></i></button></div>
+        <p id="cancel-description" class="muted"></p>
+        <div id="cancel-error" class="notice error" role="alert" hidden></div>
+        <div class="dialog-actions"><button class="button secondary" id="keep-booking">Mantieni prenotazione</button><button class="button danger" id="confirm-cancel"><i data-lucide="calendar-x"></i> Annulla soggiorno</button></div>
+    </dialog>
+    <div id="toast" class="toast" role="status" hidden><i data-lucide="circle-check"></i><span id="toast-message"></span><button id="dismiss-toast" class="icon-button" title="Chiudi notifica" aria-label="Chiudi notifica"><i data-lucide="x"></i></button></div>
+</body>
+</html>
