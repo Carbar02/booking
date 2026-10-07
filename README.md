@@ -14,7 +14,8 @@ Da PowerShell, nella cartella del progetto:
 
 Se BookingApplication e gia in esecuzione in VS Code, arrestarla e riavviarla
 per caricare le nuove classi e dipendenze. Avviare una sola istanza per database.
-L'indirizzo predefinito e http://localhost:8080/camere.
+L'applicazione usa la porta 8081 per evitare il conflitto con la porta 8080.
+L'indirizzo e http://localhost:8081/camere.
 
 H2 salva i dati nella cartella locale `data/`, esclusa da Git.
 I dati rimangono dopo il riavvio. `ddl-auto=update` e una configurazione
