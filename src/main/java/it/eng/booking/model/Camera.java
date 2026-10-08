@@ -52,6 +52,15 @@ public class Camera {
         this.attiva = attiva;
     }
 
+    public void aggiorna(String numero, TipoCamera tipo, int capienzaMassima,
+            BigDecimal prezzoPerNotte, boolean attiva) {
+        this.numero = numero;
+        this.tipo = tipo;
+        this.capienzaMassima = capienzaMassima;
+        this.prezzoPerNotte = prezzoPerNotte;
+        this.attiva = attiva;
+    }
+
     public Long getId() {
         return id;
     }

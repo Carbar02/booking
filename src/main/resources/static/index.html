@@ -25,6 +25,7 @@
         <div class="tabs" role="tablist" aria-label="Viste">
             <button class="tab active" id="catalog-tab" role="tab" aria-selected="true" aria-controls="catalog-panel"><i data-lucide="bed-double"></i> Appartamenti</button>
             <button class="tab" id="bookings-tab" role="tab" aria-selected="false" aria-controls="bookings-panel" tabindex="-1"><i data-lucide="calendar-check"></i> Prenotazioni <span id="bookings-count" class="count">0</span></button>
+            <button class="tab" id="management-tab" role="tab" aria-selected="false" aria-controls="management-panel" tabindex="-1"><i data-lucide="settings-2"></i> Gestione</button>
         </div>
         <div class="notice error" id="global-error" role="alert" hidden><span id="global-error-text"></span><button class="text-button" id="retry-load"><i data-lucide="refresh-cw"></i> Riprova</button></div>
         <section id="catalog-panel" role="tabpanel" aria-labelledby="catalog-tab">
@@ -55,6 +56,22 @@
             <div id="bookings-error" class="notice error" role="alert" hidden></div>
             <div id="booking-list"></div>
         </section>
+        <section id="management-panel" role="tabpanel" aria-labelledby="management-tab" hidden>
+            <div class="bookings-heading"><div><h2>Gestione</h2><p class="muted">Modifica inventario e contatti ospite</p></div><button class="button secondary" id="refresh-management"><i data-lucide="refresh-cw"></i> Aggiorna</button></div>
+            <div id="management-error" class="notice error" role="alert" hidden></div>
+            <div class="management-tabs" role="tablist" aria-label="Gestione">
+                <button class="management-tab active" id="inventory-tab" role="tab" aria-selected="true" aria-controls="inventory-panel">Appartamenti e camere</button>
+                <button class="management-tab" id="guests-tab" role="tab" aria-selected="false" aria-controls="guests-panel" tabindex="-1">Ospiti <span id="guests-count" class="count">0</span></button>
+            </div>
+            <section id="inventory-panel" role="tabpanel" aria-labelledby="inventory-tab">
+                <div class="management-section-heading"><div><h3>Inventario</h3><p class="muted">Le camere fuori servizio restano nello storico delle prenotazioni.</p></div><button class="button primary" id="new-apartment"><i data-lucide="plus"></i> Nuovo appartamento</button></div>
+                <div id="inventory-list"></div>
+            </section>
+            <section id="guests-panel" role="tabpanel" aria-labelledby="guests-tab" hidden>
+                <div class="management-section-heading"><div><h3>Anagrafica ospiti</h3><p class="muted">L'email associa i soggiorni allo stesso contatto.</p></div><div class="inventory-actions"><label class="guest-search"><i data-lucide="search"></i><span class="sr-only">Cerca ospite</span><input id="guest-search" type="search" placeholder="Nome, email o telefono"></label><button class="button primary" id="new-guest"><i data-lucide="user-plus"></i> Nuovo ospite</button></div></div>
+                <div id="guests-list"></div>
+            </section>
+        </section>
         <footer class="page-footer"><span>Booking B&amp;B</span><span>Appartamenti Aurora &amp; Giardino &middot; Firenze</span></footer>
     </main>
     <dialog id="booking-dialog" aria-labelledby="booking-dialog-title">
@@ -71,6 +88,18 @@
         <p id="cancel-description" class="muted"></p>
         <div id="cancel-error" class="notice error" role="alert" hidden></div>
         <div class="dialog-actions"><button class="button secondary" id="keep-booking">Mantieni prenotazione</button><button class="button danger" id="confirm-cancel"><i data-lucide="calendar-x"></i> Annulla soggiorno</button></div>
+    </dialog>
+    <dialog id="apartment-dialog" aria-labelledby="apartment-dialog-title">
+        <div class="dialog-heading"><div><p class="eyebrow">INVENTARIO</p><h2 id="apartment-dialog-title">Nuovo appartamento</h2></div><button class="icon-button" data-close-dialog="apartment-dialog" title="Chiudi" aria-label="Chiudi"><i data-lucide="x"></i></button></div>
+        <form id="apartment-form"><div class="form-stack"><div class="field"><label for="apartment-name">Nome</label><input id="apartment-name" name="nome" maxlength="120" required></div><div class="field"><label for="apartment-address">Indirizzo</label><input id="apartment-address" name="indirizzo" maxlength="240" required></div><div class="field"><label for="apartment-description">Descrizione</label><textarea id="apartment-description" name="descrizione" maxlength="500" rows="3"></textarea></div></div><div id="apartment-error" class="notice error" role="alert" hidden></div><div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog="apartment-dialog">Annulla</button><button type="submit" class="button primary">Salva appartamento</button></div></form>
+    </dialog>
+    <dialog id="room-dialog" aria-labelledby="room-dialog-title">
+        <div class="dialog-heading"><div><p class="eyebrow">INVENTARIO</p><h2 id="room-dialog-title">Nuova camera</h2></div><button class="icon-button" data-close-dialog="room-dialog" title="Chiudi" aria-label="Chiudi"><i data-lucide="x"></i></button></div>
+        <form id="room-form"><div class="form-stack"><div class="field"><label for="room-apartment">Appartamento</label><select id="room-apartment" required></select></div><div class="guest-fields"><div class="field"><label for="room-number">Numero camera</label><input id="room-number" name="numero" maxlength="20" required></div><div class="field"><label for="room-type">Tipologia</label><select id="room-type" name="tipo"><option value="SINGOLA">Singola</option><option value="DOPPIA">Doppia</option><option value="FAMILIARE">Familiare</option></select></div><div class="field"><label for="room-capacity">Capienza</label><input id="room-capacity" name="capienzaMassima" type="number" min="1" max="20" value="1" required></div><div class="field"><label for="room-price">Prezzo per notte (&euro;)</label><input id="room-price" name="prezzoPerNotte" type="number" min="0" step="0.01" value="55.00" required></div></div><label class="checkbox-field"><input id="room-active" name="attiva" type="checkbox" checked> Camera in servizio</label></div><div id="room-error" class="notice error" role="alert" hidden></div><div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog="room-dialog">Annulla</button><button type="submit" class="button primary">Salva camera</button></div></form>
+    </dialog>
+    <dialog id="guest-dialog" aria-labelledby="guest-dialog-title">
+        <div class="dialog-heading"><div><p class="eyebrow">ANAGRAFICA</p><h2 id="guest-dialog-title">Modifica ospite</h2></div><button class="icon-button" data-close-dialog="guest-dialog" title="Chiudi" aria-label="Chiudi"><i data-lucide="x"></i></button></div>
+        <form id="guest-form"><div class="guest-fields"><div class="field"><label for="edit-guest-name">Nome</label><input id="edit-guest-name" name="nome" maxlength="100" required></div><div class="field"><label for="edit-guest-surname">Cognome</label><input id="edit-guest-surname" name="cognome" maxlength="100" required></div><div class="field"><label for="edit-guest-email">Email</label><input id="edit-guest-email" name="email" type="email" maxlength="254" required></div><div class="field"><label for="edit-guest-phone">Telefono</label><input id="edit-guest-phone" name="telefono" type="tel" maxlength="30" required></div></div><div id="guest-error" class="notice error" role="alert" hidden></div><div class="dialog-actions"><button type="button" class="button secondary" data-close-dialog="guest-dialog">Annulla</button><button type="submit" class="button primary"><i data-lucide="check"></i> Salva contatto</button></div></form>
     </dialog>
     <div id="toast" class="toast" role="status" hidden><i data-lucide="circle-check"></i><span id="toast-message"></span><button id="dismiss-toast" class="icon-button" title="Chiudi notifica" aria-label="Chiudi notifica"><i data-lucide="x"></i></button></div>
 </body>

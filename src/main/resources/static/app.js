@@ -7,7 +7,7 @@ const photos = [
     'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=640&q=85',
     'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=640&q=85'
 ];
-const state = { apartments: [], bookings: [], availableIds: null, selected: new Map(), searchVersion: 0, cancelId: null, submitting: false };
+const state = { apartments: [], bookings: [], guests: [], availableIds: null, selected: new Map(), searchVersion: 0, cancelId: null, editingApartmentId: null, editingRoomId: null, editingGuestId: null, submitting: false };
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 const icon = (name) => `<i data-lucide="${name}"></i>`;
 const refreshIcons = () => window.lucide?.createIcons();
@@ -159,14 +159,148 @@ async function toggleRoom(id) {
 }
 
 function setTab(view, focus = false) {
-    const catalog = view === 'catalog';
-    for (const [name, active] of [['catalog', catalog], ['bookings', !catalog]]) {
+    for (const name of ['catalog', 'bookings', 'management']) {
+        const active = name === view;
         const tab = byId(`${name}-tab`);
         tab.classList.toggle('active', active);
         tab.setAttribute('aria-selected', String(active));
         tab.tabIndex = active ? 0 : -1;
         byId(`${name}-panel`).hidden = !active;
         if (active && focus) tab.focus();
+    }
+    if (view === 'management') loadManagement();
+}
+
+function renderInventory() {
+    byId('inventory-list').innerHTML = state.apartments.length ? state.apartments.map((apartment) => `<section class="inventory-property">
+        <div class="inventory-property-heading"><div><h3>${escapeHtml(apartment.nome)}</h3><p>${escapeHtml(apartment.indirizzo)} / ${apartment.camere.length} ${apartment.camere.length === 1 ? 'camera' : 'camere'}</p></div>
+            <div class="inventory-actions"><button class="button secondary" data-edit-apartment="${apartment.id}">${icon('pencil')} Modifica</button><button class="button primary" data-add-room="${apartment.id}">${icon('plus')} Aggiungi camera</button></div></div>
+        ${apartment.camere.length ? `<div class="inventory-scroll"><table class="inventory-table"><thead><tr><th>CAMERA</th><th>TIPO</th><th>OSPITI</th><th>PREZZO / NOTTE</th><th>STATO</th><th>AZIONI</th></tr></thead><tbody>${apartment.camere.map((room) => `<tr><td><strong>${escapeHtml(room.numero)}</strong></td><td>${escapeHtml(typeLabels[room.tipo])}</td><td>${room.capienzaMassima}</td><td>${currency.format(room.prezzoPerNotte)}</td><td><span class="badge ${room.attiva ? 'green' : 'rose'}">${room.attiva ? 'In servizio' : 'Fuori servizio'}</span></td><td><div class="inventory-row-actions"><button class="button secondary" data-edit-room="${room.id}">${icon('pencil')} Modifica</button><button class="button secondary" data-toggle-room="${room.id}" aria-label="${room.attiva ? 'Metti fuori servizio' : 'Rimetti in servizio'} camera ${escapeHtml(room.numero)}">${icon(room.attiva ? 'power' : 'power')} ${room.attiva ? 'Disattiva' : 'Attiva'}</button></div></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Nessuna camera associata.</p>'}
+        </section>`).join('') : emptyState('Nessun appartamento', 'Aggiungi il primo appartamento per iniziare.', 'house-plus');
+    refreshIcons();
+}
+
+function renderGuests() {
+    const query = byId('guest-search').value.trim().toLocaleLowerCase('it');
+    const guests = state.guests.filter((guest) => `${guest.nome} ${guest.cognome} ${guest.email} ${guest.telefono}`.toLocaleLowerCase('it').includes(query));
+    byId('guests-count').textContent = state.guests.length;
+    byId('guests-list').innerHTML = guests.length ? `<div class="table-scroll" tabindex="0" role="region" aria-label="Elenco ospiti"><table class="guest-table"><thead><tr><th>OSPITE</th><th>EMAIL</th><th>TELEFONO</th><th>AZIONI</th></tr></thead><tbody>${guests.map((guest) => `<tr><td><strong>${escapeHtml(guest.cognome)} ${escapeHtml(guest.nome)}</strong><small>#${guest.id}</small></td><td>${escapeHtml(guest.email)}</td><td>${escapeHtml(guest.telefono)}</td><td><button class="button secondary" data-edit-guest="${guest.id}">${icon('pencil')} Modifica</button></td></tr>`).join('')}</tbody></table></div>`
+        : emptyState(query ? 'Nessun ospite trovato' : 'Nessun ospite registrato', query ? 'Prova con un altro nome, email o telefono.' : 'Gli ospiti verranno aggiunti alla prima prenotazione.', 'users');
+    refreshIcons();
+}
+
+async function loadManagement() {
+    byId('refresh-management').disabled = true;
+    showError('management-error', '');
+    try {
+        const [apartments, guests] = await Promise.all([api('/appartamenti'), api('/gestione/ospiti')]);
+        state.apartments = apartments;
+        state.guests = guests;
+        renderInventory();
+        renderGuests();
+        renderCatalog();
+    } catch (error) {
+        showError('management-error', error.message);
+    } finally {
+        byId('refresh-management').disabled = false;
+    }
+}
+
+function apartmentPayload(form) {
+    const fields = new FormData(form);
+    return { nome: String(fields.get('nome')).trim(), indirizzo: String(fields.get('indirizzo')).trim(), descrizione: String(fields.get('descrizione') || '').trim() };
+}
+
+function openApartmentForm(apartment = null) {
+    state.editingApartmentId = apartment?.id ?? null;
+    byId('apartment-form').reset();
+    byId('apartment-dialog-title').textContent = apartment ? 'Modifica appartamento' : 'Nuovo appartamento';
+    byId('apartment-name').value = apartment?.nome ?? '';
+    byId('apartment-address').value = apartment?.indirizzo ?? '';
+    byId('apartment-description').value = apartment?.descrizione ?? '';
+    showError('apartment-error', '');
+    byId('apartment-dialog').showModal();
+}
+
+function openRoomForm(room = null, apartmentId = null) {
+    state.editingRoomId = room?.id ?? null;
+    byId('room-form').reset();
+    byId('room-dialog-title').textContent = room ? `Modifica camera ${room.numero}` : 'Nuova camera';
+    byId('room-apartment').innerHTML = state.apartments.map((apartment) => `<option value="${apartment.id}">${escapeHtml(apartment.nome)}</option>`).join('');
+    byId('room-apartment').disabled = Boolean(room);
+    byId('room-apartment').value = room?.appartamentoId ?? apartmentId ?? state.apartments[0]?.id ?? '';
+    byId('room-number').value = room?.numero ?? '';
+    byId('room-type').value = room?.tipo ?? 'SINGOLA';
+    byId('room-capacity').value = room?.capienzaMassima ?? 1;
+    byId('room-price').value = room?.prezzoPerNotte ?? '55.00';
+    byId('room-active').checked = room?.attiva ?? true;
+    showError('room-error', '');
+    byId('room-dialog').showModal();
+}
+
+function openGuestForm(guest) {
+    state.editingGuestId = guest?.id ?? null;
+    byId('guest-form').reset();
+    byId('guest-dialog-title').textContent = guest ? 'Modifica ospite' : 'Nuovo ospite';
+    byId('edit-guest-name').value = guest?.nome ?? '';
+    byId('edit-guest-surname').value = guest?.cognome ?? '';
+    byId('edit-guest-email').value = guest?.email ?? '';
+    byId('edit-guest-phone').value = guest?.telefono ?? '';
+    showError('guest-error', '');
+    byId('guest-dialog').showModal();
+}
+
+async function saveApartment(event) {
+    event.preventDefault();
+    const id = state.editingApartmentId;
+    const method = id ? 'PUT' : 'POST';
+    const path = id ? `/gestione/appartamenti/${id}` : '/gestione/appartamenti';
+    try {
+        await api(path, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(apartmentPayload(event.currentTarget)) });
+        byId('apartment-dialog').close();
+        await Promise.all([loadCatalog(), loadManagement()]);
+        toast(id ? 'Appartamento aggiornato.' : 'Appartamento creato.');
+    } catch (error) {
+        showError('apartment-error', error.message);
+    }
+}
+
+async function saveRoom(event) {
+    event.preventDefault();
+    const id = state.editingRoomId;
+    const request = { numero: byId('room-number').value.trim(), tipo: byId('room-type').value,
+        capienzaMassima: Number(byId('room-capacity').value), prezzoPerNotte: Number(byId('room-price').value),
+        attiva: byId('room-active').checked };
+    const path = id ? `/gestione/camere/${id}` : `/gestione/appartamenti/${byId('room-apartment').value}/camere`;
+    try {
+        await api(path, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request) });
+        byId('room-dialog').close();
+        state.availableIds = null;
+        state.selected.clear();
+        await Promise.all([loadCatalog(), loadManagement()]);
+        renderSummary();
+        toast(id ? 'Camera aggiornata.' : 'Camera aggiunta.');
+    } catch (error) {
+        showError('room-error', error.message);
+    }
+}
+
+async function saveGuest(event) {
+    event.preventDefault();
+    const fields = new FormData(event.currentTarget);
+    const request = Object.fromEntries(['nome', 'cognome', 'email', 'telefono']
+        .map((name) => [name, String(fields.get(name)).trim()]));
+    try {
+        const creating = state.editingGuestId === null;
+        const guest = await api(creating ? '/gestione/ospiti' : `/gestione/ospiti/${state.editingGuestId}`, {
+            method: creating ? 'POST' : 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request)
+        });
+        state.guests = creating ? [...state.guests, guest] : state.guests.map((existing) => existing.id === guest.id ? guest : existing);
+        byId('guest-dialog').close();
+        renderGuests();
+        toast(creating ? 'Contatto ospite creato.' : 'Contatto ospite aggiornato.');
+    } catch (error) {
+        showError('guest-error', error.message);
     }
 }
 
@@ -300,10 +434,80 @@ byId('reset-filters').addEventListener('click', () => { byId('apartment-filter')
 byId('properties').addEventListener('click', (event) => { const button = event.target.closest('[data-room-id]'); if (button) toggleRoom(Number(button.dataset.roomId)); });
 byId('selected-rooms').addEventListener('click', (event) => { const button = event.target.closest('[data-remove-id]'); if (button) toggleRoom(Number(button.dataset.removeId)); });
 byId('selected-rooms').addEventListener('change', (event) => { const select = event.target.closest('[data-guests-id]'); if (select) { state.selected.get(Number(select.dataset.guestsId)).numeroOspiti = Number(select.value); renderSummary(); } });
-for (const view of ['catalog', 'bookings']) {
+for (const view of ['catalog', 'bookings', 'management']) {
     byId(`${view}-tab`).addEventListener('click', () => setTab(view));
-    byId(`${view}-tab`).addEventListener('keydown', (event) => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); setTab(event.key === 'Home' ? 'catalog' : event.key === 'End' ? 'bookings' : view === 'catalog' ? 'bookings' : 'catalog', true); } });
+    byId(`${view}-tab`).addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        const views = ['catalog', 'bookings', 'management'];
+        const current = views.indexOf(view);
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? views.length - 1
+            : (current + (event.key === 'ArrowRight' ? 1 : views.length - 1)) % views.length;
+        setTab(views[next], true);
+    });
 }
+for (const [name, panel] of [['inventory', 'inventory'], ['guests', 'guests']]) {
+    byId(`${name}-tab`).addEventListener('click', () => {
+        for (const tabName of ['inventory', 'guests']) {
+            const active = tabName === name;
+            byId(`${tabName}-tab`).classList.toggle('active', active);
+            byId(`${tabName}-tab`).setAttribute('aria-selected', String(active));
+            byId(`${tabName}-tab`).tabIndex = active ? 0 : -1;
+            byId(`${tabName}-panel`).hidden = !active;
+        }
+    });
+}
+byId('new-apartment').addEventListener('click', () => openApartmentForm());
+byId('new-guest').addEventListener('click', () => openGuestForm());
+byId('inventory-list').addEventListener('click', (event) => {
+    const editApartment = event.target.closest('[data-edit-apartment]');
+    if (editApartment) {
+        const apartment = state.apartments.find((item) => item.id === Number(editApartment.dataset.editApartment));
+        if (apartment) openApartmentForm(apartment);
+        return;
+    }
+    const addRoom = event.target.closest('[data-add-room]');
+    if (addRoom) { openRoomForm(null, Number(addRoom.dataset.addRoom)); return; }
+    const editRoom = event.target.closest('[data-edit-room]');
+    if (editRoom) {
+        const room = state.apartments.flatMap((apartment) => apartment.camere).find((item) => item.id === Number(editRoom.dataset.editRoom));
+        if (room) openRoomForm(room);
+        return;
+    }
+    const toggle = event.target.closest('[data-toggle-room]');
+    if (toggle) {
+        const room = state.apartments.flatMap((apartment) => apartment.camere).find((item) => item.id === Number(toggle.dataset.toggleRoom));
+        if (room) {
+            byId('room-apartment').value = String(room.appartamentoId);
+            state.editingRoomId = room.id;
+            byId('room-number').value = room.numero;
+            byId('room-type').value = room.tipo;
+            byId('room-capacity').value = room.capienzaMassima;
+            byId('room-price').value = room.prezzoPerNotte;
+            const request = { numero: room.numero, tipo: room.tipo, capienzaMassima: room.capienzaMassima,
+                prezzoPerNotte: room.prezzoPerNotte, attiva: !room.attiva };
+            api(`/gestione/camere/${room.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request) })
+                .then(async () => {
+                    state.availableIds = null;
+                    state.selected.clear();
+                    await Promise.all([loadCatalog(), loadManagement()]);
+                    renderSummary();
+                    toast(request.attiva ? 'Camera rimessa in servizio.' : 'Camera fuori servizio.');
+                }).catch((error) => showError('management-error', error.message));
+        }
+    }
+});
+byId('guests-list').addEventListener('click', (event) => {
+    const button = event.target.closest('[data-edit-guest]');
+    const guest = state.guests.find((item) => item.id === Number(button?.dataset.editGuest));
+    if (guest) openGuestForm(guest);
+});
+byId('guest-search').addEventListener('input', renderGuests);
+byId('refresh-management').addEventListener('click', () => Promise.all([loadManagement(), loadCatalog()]));
+byId('apartment-form').addEventListener('submit', saveApartment);
+byId('room-form').addEventListener('submit', saveRoom);
+byId('guest-form').addEventListener('submit', saveGuest);
+document.querySelectorAll('[data-close-dialog]').forEach((button) => button.addEventListener('click', () => byId(button.dataset.closeDialog).close()));
 byId('open-booking').addEventListener('click', openCheckout);
 for (const id of ['close-booking', 'back-to-catalog']) byId(id).addEventListener('click', () => { if (!state.submitting) byId('booking-dialog').close(); });
 byId('booking-dialog').addEventListener('cancel', (event) => { if (state.submitting) event.preventDefault(); });

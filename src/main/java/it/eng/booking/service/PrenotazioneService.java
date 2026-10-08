@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -81,8 +82,10 @@ public class PrenotazioneService {
             camere.add(camera);
         }
         OspiteRequest datiOspite = request.ospite();
-        Ospite ospite = ospiteRepository.save(new Ospite(datiOspite.nome(), datiOspite.cognome(),
-                datiOspite.email(), datiOspite.telefono()));
+        String email = datiOspite.email().trim().toLowerCase(Locale.ROOT);
+        Ospite ospite = ospiteRepository.findFirstByEmailIgnoreCaseOrderByIdAsc(email)
+            .orElseGet(() -> ospiteRepository.save(new Ospite(datiOspite.nome().trim(),
+                datiOspite.cognome().trim(), email, datiOspite.telefono().trim())));
         Prenotazione prenotazione = new Prenotazione(ospite, request.dataArrivo(), request.dataPartenza());
         for (int indice = 0; indice < camere.size(); indice++) {
             prenotazione.aggiungiCamera(camere.get(indice), dettagli.get(indice).numeroOspiti());

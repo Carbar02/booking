@@ -1,6 +1,7 @@
 package it.eng.booking.exception;
 
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -25,6 +26,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(RisorsaGiaEsistenteException.class)
+    public ProblemDetail risorsaGiaEsistente(RisorsaGiaEsistenteException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
     @ExceptionHandler(CameraNonDisponibileException.class)
     public ProblemDetail cameraNonDisponibile(CameraNonDisponibileException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
@@ -34,6 +40,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail prenotazioneConcorrente(PessimisticLockingFailureException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
                 "La camera e in corso di prenotazione. Riprovare la richiesta.");
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail violazioneIntegrita(DataIntegrityViolationException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "Operazione non possibile: controllare che numero camera o altri dati univoci non siano gia utilizzati.");
     }
 
     @Override

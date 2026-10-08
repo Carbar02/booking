@@ -147,8 +147,33 @@ dialog::backdrop { background: #14261f80; }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 5; display: flex; align-items: center; gap: 12px; width: max-content; max-width: calc(100% - 32px); padding: 14px 18px; color: white; background: var(--green-dark); border-radius: 6px; box-shadow: 0 4px 22px #14261f26; font-size: 13px; }
 .toast span { min-width: 0; overflow-wrap: anywhere; }
 .toast .icon-button { color: white; border-color: #ffffff40; }
+.management-tabs { display: flex; gap: 20px; border-bottom: 1px solid var(--line); margin: 2px 0 24px; }
+.management-tab { display: inline-flex; align-items: center; gap: 8px; padding: 12px 2px; margin-bottom: -1px; background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font-size: 12px; font-weight: 600; }
+.management-tab.active { color: var(--green); border-bottom-color: var(--green); }
+.management-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 20px 0; }
+.management-section-heading h3 { font-size: 16px; }
+.management-section-heading p { margin-top: 4px; font-size: 12px; }
+.guest-search { display: flex; align-items: center; gap: 8px; width: min(300px, 100%); color: var(--muted); }
+.guest-search input { height: 38px; font-size: 12px; }
+.inventory-property { margin: 0 0 22px; border-top: 1px solid var(--line); }
+.inventory-property-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 0; }
+.inventory-property-heading h3 { font-family: 'Fraunces', Georgia, serif; font-size: 21px; font-weight: 500; }
+.inventory-property-heading p { margin-top: 4px; color: var(--muted); font-size: 11px; }
+.inventory-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.inventory-actions .button, .inventory-table .button, .guest-table .button { min-height: 34px; padding: 7px 10px; font-size: 11px; }
+.inventory-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+.inventory-table th { background: #edf1ee; padding: 11px 12px; color: var(--muted); font-size: 10px; font-weight: 600; }
+.inventory-table td { padding: 12px; border-bottom: 1px solid var(--line); }
+.inventory-table tr:last-child td { border-bottom: 0; }
+.inventory-row-actions { display: flex; gap: 7px; justify-content: flex-end; }
+.checkbox-field { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; }
+.checkbox-field input { width: 18px; height: 18px; accent-color: var(--green); }
+.form-stack { display: grid; gap: 16px; }
+.form-stack textarea { width: 100%; min-height: 92px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 5px; color: var(--ink); resize: vertical; font: inherit; }
+.form-stack textarea:focus { outline: 2px solid var(--green); outline-offset: 2px; }
+.guest-table td:nth-child(2) { overflow-wrap: anywhere; }
 @keyframes appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 1100px) { .page, .header-inner { padding-left: 24px; padding-right: 24px; } .catalog-layout { grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; } .room-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .search-form { grid-template-columns: 1fr 1fr 1fr; } .search-button { grid-column: 1 / -1; justify-self: end; } }
 @media (max-width: 760px) { .header-inner { min-height: 70px; } .brand-location, .header-note { display: none; } .brand { font-size: 27px; } .page { padding-top: 26px; } h1 { font-size: 28px; } .page-heading { align-items: flex-start; flex-direction: column; gap: 10px; margin-bottom: 18px; } .catalog-layout { grid-template-columns: 1fr; } .booking-summary { position: static; order: -1; } .empty-selection { padding: 12px 0; } .summary-heading { margin-bottom: 6px; } .catalog-toolbar { flex-direction: column; align-items: stretch; gap: 12px; } .filters select { width: 100%; max-width: none; } .filters { min-width: 0; } .search-form { grid-template-columns: 1fr 1fr; gap: 12px; } .search-button { grid-column: auto; justify-self: stretch; padding-left: 9px; padding-right: 9px; font-size: 12px; } .room-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .page-footer { flex-direction: column; gap: 4px; } }
-@media (max-width: 520px) { .page, .header-inner { padding-left: 16px; padding-right: 16px; } h1 { font-size: 26px; } .tabs { gap: 20px; } .tab { font-size: 12px; gap: 6px; } .property-header { grid-template-columns: 120px minmax(0, 1fr); gap: 14px; } .property-info h2 { font-size: 24px; } .property-photo img { aspect-ratio: 1; } .property-description { font-size: 11px; } .room-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .room { padding: 12px; } .room-top { flex-wrap: wrap; margin-bottom: 12px; } .room-price strong { font-size: 20px; } .bookings-heading h2 { font-size: 18px; } .bookings-heading .button { padding: 9px; font-size: 12px; } dialog { padding: 20px; } .dialog-heading h2 { font-size: 20px; } .guest-fields { grid-template-columns: 1fr; gap: 12px; } .dialog-actions { flex-direction: column-reverse; } .dialog-actions .button { width: 100%; } }
+@media (max-width: 520px) { .page, .header-inner { padding-left: 16px; padding-right: 16px; } h1 { font-size: 26px; } .tabs { gap: 12px; } .tab { font-size: 11px; gap: 5px; } .property-header { grid-template-columns: 120px minmax(0, 1fr); gap: 14px; } .property-info h2 { font-size: 24px; } .property-photo img { aspect-ratio: 1; } .property-description { font-size: 11px; } .room-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .room { padding: 12px; } .room-top { flex-wrap: wrap; margin-bottom: 12px; } .room-price strong { font-size: 20px; } .bookings-heading h2 { font-size: 18px; } .bookings-heading .button { padding: 9px; font-size: 12px; } .management-section-heading { align-items: flex-start; flex-direction: column; } .guest-search { width: 100%; } .inventory-property-heading { align-items: flex-start; flex-direction: column; } .inventory-actions { justify-content: flex-start; } .inventory-table { min-width: 620px; } .inventory-scroll { overflow-x: auto; } dialog { padding: 20px; } .dialog-heading h2 { font-size: 20px; } .guest-fields { grid-template-columns: 1fr; gap: 12px; } .dialog-actions { flex-direction: column-reverse; } .dialog-actions .button { width: 100%; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

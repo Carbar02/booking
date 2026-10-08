@@ -9,8 +9,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import it.eng.booking.dto.AppartamentoResponse;
+import it.eng.booking.dto.AppartamentoRequest;
+import it.eng.booking.dto.CameraRequest;
 import it.eng.booking.dto.CameraResponse;
 import it.eng.booking.exception.RichiestaNonValidaException;
+import it.eng.booking.exception.RisorsaNonTrovataException;
+import it.eng.booking.model.Appartamento;
+import it.eng.booking.model.Camera;
 import it.eng.booking.model.StatoPrenotazione;
 import it.eng.booking.model.TipoCamera;
 import it.eng.booking.repository.AppartamentoRepository;
@@ -46,6 +51,41 @@ public class CameraService {
                 .map(AppartamentoResponse::from).toList();
     }
 
+            @Transactional
+            public AppartamentoResponse creaAppartamento(AppartamentoRequest request) {
+            Appartamento appartamento = appartamentoRepository.save(new Appartamento(
+                request.nome().trim(), request.indirizzo().trim(), pulisci(request.descrizione())));
+            return AppartamentoResponse.from(appartamento);
+            }
+
+            @Transactional
+            public AppartamentoResponse aggiornaAppartamento(Long id, AppartamentoRequest request) {
+            Appartamento appartamento = appartamentoRepository.findById(id)
+                .orElseThrow(() -> new RisorsaNonTrovataException("Appartamento non trovato: " + id));
+            appartamento.aggiorna(request.nome().trim(), request.indirizzo().trim(), pulisci(request.descrizione()));
+            return AppartamentoResponse.from(appartamento);
+            }
+
+            @Transactional
+            public CameraResponse creaCamera(Long appartamentoId, CameraRequest request) {
+            Appartamento appartamento = appartamentoRepository.findById(appartamentoId)
+                .orElseThrow(() -> new RisorsaNonTrovataException("Appartamento non trovato: " + appartamentoId));
+            validaCamera(request);
+            Camera camera = cameraRepository.save(new Camera(request.numero().trim(), request.tipo(),
+                request.capienzaMassima(), request.prezzoPerNotte(), appartamento, request.attiva()));
+            return CameraResponse.from(camera);
+            }
+
+            @Transactional
+            public CameraResponse aggiornaCamera(Long id, CameraRequest request) {
+            Camera camera = cameraRepository.findById(id)
+                .orElseThrow(() -> new RisorsaNonTrovataException("Camera non trovata: " + id));
+            validaCamera(request);
+            camera.aggiorna(request.numero().trim(), request.tipo(), request.capienzaMassima(),
+                request.prezzoPerNotte(), request.attiva());
+            return CameraResponse.from(camera);
+            }
+
     public List<CameraResponse> getDisponibili(LocalDate dataArrivo, LocalDate dataPartenza,
             int numeroOspiti, Long appartamentoId, TipoCamera tipo) {
         if (dataArrivo.isBefore(LocalDate.now()) || !dataPartenza.isAfter(dataArrivo)) {
@@ -61,5 +101,15 @@ public class CameraService {
         return getCamere(appartamentoId, tipo).stream()
                 .filter(camera -> camera.attiva() && camera.capienzaMassima() >= numeroOspiti)
                 .filter(camera -> !occupate.contains(camera.id())).toList();
+    }
+
+    private void validaCamera(CameraRequest request) {
+        if (request.capienzaMassima() <= 0 || request.prezzoPerNotte().signum() < 0) {
+            throw new RichiestaNonValidaException("Capienza e prezzo della camera non validi.");
+        }
+    }
+
+    private String pulisci(String valore) {
+        return valore == null ? "" : valore.trim();
     }
 }

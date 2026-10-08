@@ -31,6 +31,12 @@ public class Appartamento {
         this.descrizione = descrizione;
     }
 
+    public void aggiorna(String nome, String indirizzo, String descrizione) {
+        this.nome = nome;
+        this.indirizzo = indirizzo;
+        this.descrizione = descrizione;
+    }
+
     public Long getId() {
         return id;
     }

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -248,6 +249,69 @@ class BookingApplicationTests {
 		mockMvc.perform(post("/prenotazioni").contentType(MediaType.APPLICATION_JSON)
 				.content(jsonMapper.writeValueAsString(richiesta(999999L, 1, arrivo))))
 				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void managementCanCreateApartmentAndRoom() throws Exception {
+		String apartment = mockMvc.perform(post("/gestione/appartamenti").contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"nome":"Borgo","indirizzo":"Via Verdi 8, Firenze","descrizione":"Nel centro storico"}
+						"""))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.nome").value("Borgo"))
+				.andReturn().getResponse().getContentAsString();
+		Long apartmentId = jsonMapper.readTree(apartment).get("id").longValue();
+		mockMvc.perform(post("/gestione/appartamenti/" + apartmentId + "/camere")
+				.contentType(MediaType.APPLICATION_JSON).content("""
+						{"numero":"301","tipo":"FAMILIARE","capienzaMassima":4,"prezzoPerNotte":150.00,"attiva":true}
+						"""))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.numero").value("301"))
+				.andExpect(jsonPath("$.appartamentoNome").value("Borgo"));
+	}
+
+	@Test
+	void managementCanUpdateApartmentAndGuest() throws Exception {
+		Long apartmentId = camere.get(0).getAppartamento().getId();
+		mockMvc.perform(put("/gestione/appartamenti/" + apartmentId).contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"nome":"Aurora Centro","indirizzo":"Via Roma 12, Firenze","descrizione":"Rinnovato"}
+						"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.nome").value("Aurora Centro"));
+		PrenotazioneResponse booking = prenotazioneService.crea(richiesta(camere.get(0).getId(), 1, arrivo));
+		mockMvc.perform(put("/gestione/ospiti/" + booking.ospite().id())
+				.contentType(MediaType.APPLICATION_JSON).content("""
+						{"nome":"Mario","cognome":"Bianchi","email":"mario@example.com","telefono":"+39 3331234567"}
+						"""))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.cognome").value("Bianchi"));
+	}
+
+	@Test
+	void bookingsReuseGuestByCaseInsensitiveEmail() {
+		PrenotazioneResponse first = prenotazioneService.crea(richiesta(camere.get(0).getId(), 1, arrivo));
+		CreaPrenotazioneRequest secondRequest = new CreaPrenotazioneRequest(
+				new OspiteRequest("Mario", "Rossi", "MARIO@example.com", "+39 3331234567"),
+				arrivo.plusDays(2), arrivo.plusDays(4),
+				List.of(new CameraPrenotazioneRequest(camere.get(0).getId(), 1)));
+		PrenotazioneResponse second = prenotazioneService.crea(secondRequest);
+		assertEquals(first.ospite().id(), second.ospite().id());
+		assertEquals(1, ospiteRepository.count());
+	}
+
+	@Test
+	void managementCanCreateGuestAndRejectDuplicateEmail() throws Exception {
+		String request = """
+				{"nome":"Giulia","cognome":"Verdi","email":"giulia@example.com","telefono":"+39 3330000000"}
+				""";
+		mockMvc.perform(post("/gestione/ospiti").contentType(MediaType.APPLICATION_JSON).content(request))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.email").value("giulia@example.com"));
+		mockMvc.perform(post("/gestione/ospiti").contentType(MediaType.APPLICATION_JSON)
+				.content(request.replace("giulia@example.com", "GIULIA@example.com")))
+				.andExpect(status().isConflict());
+		assertEquals(1, ospiteRepository.count());
 	}
 
 	private OspiteRequest ospite() {

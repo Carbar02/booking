@@ -74,6 +74,13 @@ Gli identificativi vengono generati dal database: consultarli con `GET /camere`.
 | GET | `/prenotazioni/{id}` | Dettaglio di una prenotazione |
 | POST | `/prenotazioni` | Creazione, risposta 201 con header Location |
 | POST | `/prenotazioni/{id}/annulla` | Annullamento, risposta 200 |
+| POST | `/gestione/appartamenti` | Crea un appartamento |
+| PUT | `/gestione/appartamenti/{id}` | Modifica un appartamento |
+| POST | `/gestione/appartamenti/{id}/camere` | Aggiunge una camera |
+| PUT | `/gestione/camere/{id}` | Modifica camera o stato di servizio |
+| GET | `/gestione/ospiti` | Elenco contatti ospite |
+| POST | `/gestione/ospiti` | Crea un contatto ospite |
+| PUT | `/gestione/ospiti/{id}` | Modifica un contatto ospite |
 
 `/camere` accetta i filtri opzionali `appartamentoId` e `tipo`:
 
@@ -120,7 +127,19 @@ deduplicazione automatica sulla email.
 - Tutte le camere vengono prenotate insieme oppure nessuna: creazione transazionale.
 - Le camere vengono bloccate in ordine di ID durante la creazione per gestire richieste concorrenti.
 - La tariffa concordata viene salvata, indipendentemente dalle future variazioni di listino.
+- Le nuove prenotazioni riutilizzano il contatto ospite quando l'email corrisponde, senza distinzione tra maiuscole e minuscole.
 - L'annullamento conserva lo storico e non blocca piu le camere; ripeterlo e consentito.
+
+La gestione non elimina fisicamente appartamenti o camere per non invalidare lo storico;
+una camera si puo mettere fuori servizio e riattivare. L'anagrafica ospiti non ha
+cancellazione per non compromettere prenotazioni esistenti.
+
+## Accesso Amministrativo
+
+Gli endpoint `/gestione/**` non hanno ancora autenticazione o autorizzazione.
+Il progetto e didattico e va usato solo in locale: non pubblicare la porta 8081
+su una rete accessibile ad altri. Prima di usarlo online, proteggere inoltre
+gli endpoint di prenotazione, che restituiscono nome, email e telefono degli ospiti.
 
 Le prenotazioni nascono `CONFERMATA` e possono diventare `ANNULLATA`.
 `IN_ATTESA` e `COMPLETATA` sono valori previsti dal modello, ma senza un workflow

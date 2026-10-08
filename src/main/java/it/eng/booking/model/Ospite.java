@@ -35,6 +35,13 @@ public class Ospite {
         this.telefono = telefono;
     }
 
+    public void aggiorna(String nome, String cognome, String email, String telefono) {
+        this.nome = nome;
+        this.cognome = cognome;
+        this.email = email;
+        this.telefono = telefono;
+    }
+
     public Long getId() {
         return id;
     }
