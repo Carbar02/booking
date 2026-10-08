@@ -4,9 +4,9 @@
     --ink: #24332d;
     --muted: #69746f;
     --line: #dce3de;
-    --green: #176b53;
-    --green-dark: #10523f;
-    --green-light: #e9f3ed;
+    --green: #0877a5;
+    --green-dark: #075a7b;
+    --green-light: #e6f4fa;
     --rose: #923b50;
     --rose-light: #f9edf0;
     --amber: #7b5b1d;
@@ -186,9 +186,9 @@ dialog::backdrop { background: #14261f80; }
 .calendar-room-label strong { overflow: hidden; color: var(--ink); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-room-label span { color: var(--muted); font-size: 9px; }
 .calendar-cell { z-index: 0; grid-row: 1; min-width: 0; border-right: 1px solid #e9eeeb; background: var(--surface); }
-.calendar-cell.today { background: #f2f8f3; }
+.calendar-cell.today { background: #eff8fc; }
 .calendar-cell.inactive { background: #f2f3f2; }
-.calendar-booking { z-index: 1; grid-row: 1; align-self: center; display: flex; flex-direction: column; justify-content: center; min-width: 0; height: 39px; margin: 0 2px; padding: 4px 7px; overflow: hidden; border-left: 3px solid var(--green-dark); border-radius: 3px; background: #dceee4; color: #174b38; line-height: 1.25; }
+.calendar-booking { z-index: 1; grid-row: 1; align-self: center; display: flex; flex-direction: column; justify-content: center; min-width: 0; height: 39px; margin: 0 2px; padding: 4px 7px; overflow: hidden; border-left: 3px solid var(--green-dark); border-radius: 3px; background: #dceff7; color: #164b66; line-height: 1.25; }
 .calendar-booking span { overflow: hidden; font-size: 10px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-booking small { overflow: hidden; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-booking.in_attesa { border-color: #986416; background: #f5e8c8; color: #634411; }
