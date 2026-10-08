@@ -25,6 +25,7 @@
         <div class="tabs" role="tablist" aria-label="Viste">
             <button class="tab active" id="catalog-tab" role="tab" aria-selected="true" aria-controls="catalog-panel"><i data-lucide="bed-double"></i> Appartamenti</button>
             <button class="tab" id="bookings-tab" role="tab" aria-selected="false" aria-controls="bookings-panel" tabindex="-1"><i data-lucide="calendar-check"></i> Prenotazioni <span id="bookings-count" class="count">0</span></button>
+            <button class="tab" id="calendar-tab" role="tab" aria-selected="false" aria-controls="calendar-panel" tabindex="-1"><i data-lucide="calendar-days"></i> Calendario</button>
             <button class="tab" id="management-tab" role="tab" aria-selected="false" aria-controls="management-panel" tabindex="-1"><i data-lucide="settings-2"></i> Gestione</button>
         </div>
         <div class="notice error" id="global-error" role="alert" hidden><span id="global-error-text"></span><button class="text-button" id="retry-load"><i data-lucide="refresh-cw"></i> Riprova</button></div>
@@ -55,6 +56,17 @@
             <div class="bookings-heading"><div><h2>Le prenotazioni</h2><p id="booking-list-label" class="muted">Tutti i soggiorni</p></div><button class="button secondary" id="refresh-bookings"><i data-lucide="refresh-cw"></i> Aggiorna</button></div>
             <div id="bookings-error" class="notice error" role="alert" hidden></div>
             <div id="booking-list"></div>
+        </section>
+        <section id="calendar-panel" role="tabpanel" aria-labelledby="calendar-tab" hidden>
+            <div class="calendar-page-heading"><div><p class="eyebrow">OCCUPAZIONE</p><h2>Calendario camere</h2><p class="muted">Un colpo d'occhio sui soggiorni e sulle camere libere.</p></div><button class="button secondary" id="refresh-calendar"><i data-lucide="refresh-cw"></i> Aggiorna</button></div>
+            <div id="calendar-error" class="notice error" role="alert" hidden></div>
+            <div class="calendar-toolbar">
+                <div class="calendar-navigation"><button class="icon-button" id="calendar-previous" title="Periodo precedente" aria-label="Periodo precedente"><i data-lucide="chevron-left"></i></button><button class="button secondary calendar-today" id="calendar-today">Oggi</button><button class="icon-button" id="calendar-next" title="Periodo successivo" aria-label="Periodo successivo"><i data-lucide="chevron-right"></i></button><label class="sr-only" for="calendar-date">Vai a una data</label><input id="calendar-date" type="date"></div>
+                <div class="calendar-controls"><label class="sr-only" for="calendar-apartment">Filtra appartamento</label><select id="calendar-apartment"><option value="">Tutti gli appartamenti</option></select><div class="calendar-view-switch" role="group" aria-label="Intervallo calendario"><button class="active" data-calendar-view="month" aria-pressed="true">Mese</button><button data-calendar-view="week" aria-pressed="false">Settimana</button><button data-calendar-view="day" aria-pressed="false">Giorno</button></div></div>
+            </div>
+            <div class="calendar-period-heading"><h3 id="calendar-period-label" aria-live="polite"></h3><div class="calendar-legend"><span><i class="legend-dot occupied"></i> Confermata</span><span><i class="legend-dot pending"></i> In attesa</span><span><i class="legend-dot completed"></i> Completata</span><span><i class="legend-dot available"></i> Libera</span></div></div>
+            <div class="calendar-summary" id="calendar-summary" aria-live="polite"></div>
+            <div id="calendar-grid"></div>
         </section>
         <section id="management-panel" role="tabpanel" aria-labelledby="management-tab" hidden>
             <div class="bookings-heading"><div><h2>Gestione</h2><p class="muted">Modifica inventario e contatti ospite</p></div><button class="button secondary" id="refresh-management"><i data-lucide="refresh-cw"></i> Aggiorna</button></div>

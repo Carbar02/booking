@@ -7,7 +7,7 @@ const photos = [
     'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=640&q=85',
     'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=640&q=85'
 ];
-const state = { apartments: [], bookings: [], guests: [], availableIds: null, selected: new Map(), searchVersion: 0, cancelId: null, editingApartmentId: null, editingRoomId: null, editingGuestId: null, submitting: false };
+const state = { apartments: [], bookings: [], guests: [], availableIds: null, selected: new Map(), searchVersion: 0, cancelId: null, editingApartmentId: null, editingRoomId: null, editingGuestId: null, calendarView: 'month', calendarDate: localDate(), submitting: false };
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 const icon = (name) => `<i data-lucide="${name}"></i>`;
 const refreshIcons = () => window.lucide?.createIcons();
@@ -52,6 +52,119 @@ async function api(path, options = {}) {
 
 function emptyState(title, detail, symbol = 'search') {
     return `<div class="empty-state">${icon(symbol)}<h2>${escapeHtml(title)}</h2><p>${escapeHtml(detail)}</p></div>`;
+}
+
+function dateSerial(value) {
+    return Date.parse(`${value}T00:00:00Z`) / 86400000;
+}
+
+function serialDate(serial) {
+    return new Date(serial * 86400000).toISOString().slice(0, 10);
+}
+
+function calendarPeriod() {
+    const anchor = new Date(`${state.calendarDate}T00:00:00Z`);
+    const anchorSerial = dateSerial(state.calendarDate);
+    if (state.calendarView === 'day') return { start: anchorSerial, end: anchorSerial + 1 };
+    if (state.calendarView === 'week') {
+        const monday = anchorSerial - (anchor.getUTCDay() + 6) % 7;
+        return { start: monday, end: monday + 7 };
+    }
+    const start = Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1) / 86400000;
+    return { start, end: Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 1) / 86400000 };
+}
+
+function shiftCalendar(offset) {
+    const anchor = new Date(`${state.calendarDate}T12:00:00`);
+    if (state.calendarView === 'day') anchor.setDate(anchor.getDate() + offset);
+    else if (state.calendarView === 'week') anchor.setDate(anchor.getDate() + offset * 7);
+    else anchor.setMonth(anchor.getMonth() + offset, 1);
+    state.calendarDate = localDateFromDate(anchor);
+    byId('calendar-date').value = state.calendarDate;
+    renderCalendar();
+}
+
+function localDateFromDate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function renderCalendar() {
+    if (!byId('calendar-grid') || !state.apartments.length) return;
+    const { start, end } = calendarPeriod();
+    const dayCount = end - start;
+    const dates = Array.from({ length: dayCount }, (_, index) => start + index);
+    const selectedApartment = byId('calendar-apartment').value;
+    const optionsValue = selectedApartment;
+    byId('calendar-apartment').innerHTML = '<option value="">Tutti gli appartamenti</option>'
+        + state.apartments.map((apartment) => `<option value="${apartment.id}">${escapeHtml(apartment.nome)}</option>`).join('');
+    byId('calendar-apartment').value = optionsValue;
+    byId('calendar-date').value = state.calendarDate;
+
+    const periodDate = new Date(`${state.calendarDate}T12:00:00`);
+    const monthLabel = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' }).format(periodDate);
+    const weekLabel = `${new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short' }).format(new Date(start * 86400000 + 43200000))} - ${new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date((end - 1) * 86400000 + 43200000))}`;
+    byId('calendar-period-label').textContent = state.calendarView === 'month'
+        ? monthLabel.charAt(0).toLocaleUpperCase('it') + monthLabel.slice(1)
+        : state.calendarView === 'week' ? weekLabel : new Intl.DateTimeFormat('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(periodDate);
+    for (const button of document.querySelectorAll('[data-calendar-view]')) {
+        const active = button.dataset.calendarView === state.calendarView;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+    }
+
+    const apartments = selectedApartment
+        ? state.apartments.filter((apartment) => String(apartment.id) === selectedApartment)
+        : state.apartments;
+    const rooms = apartments.flatMap((apartment) => apartment.camere.map((room) => ({ apartment, room })))
+        .sort((left, right) => left.apartment.id - right.apartment.id || left.room.id - right.room.id);
+    const visibleBookings = state.bookings.filter((booking) => booking.stato !== 'ANNULLATA'
+        && dateSerial(booking.dataArrivo) < end && dateSerial(booking.dataPartenza) > start);
+    const activeBookings = visibleBookings.filter((booking) => ['CONFERMATA', 'IN_ATTESA'].includes(booking.stato));
+    const occupiedNights = new Set();
+    for (const booking of activeBookings) {
+        for (const detail of booking.camere) {
+            for (let day = Math.max(start, dateSerial(booking.dataArrivo)); day < Math.min(end, dateSerial(booking.dataPartenza)); day++) {
+                occupiedNights.add(`${detail.camera.id}:${day}`);
+            }
+        }
+    }
+    const activeRoomCount = rooms.filter(({ room }) => room.attiva).length;
+    const roomNights = activeRoomCount * dayCount;
+    const fillRate = roomNights ? Math.round(occupiedNights.size / roomNights * 100) : 0;
+    byId('calendar-summary').innerHTML = `<div class="calendar-stat"><span>Prenotazioni nel periodo</span><strong>${visibleBookings.length}</strong></div><div class="calendar-stat"><span>Camere occupate / notti</span><strong>${occupiedNights.size} <small>/ ${roomNights}</small></strong></div><div class="calendar-stat"><span>Occupazione</span><strong>${fillRate}%</strong></div><div class="calendar-stat"><span>Camere in servizio</span><strong>${activeRoomCount} <small>/ ${rooms.length}</small></strong></div>`;
+
+    if (!rooms.length) {
+        byId('calendar-grid').innerHTML = emptyState('Nessuna camera disponibile', 'Prova a selezionare un altro appartamento.', 'bed-double');
+        return;
+    }
+
+    const weekday = new Intl.DateTimeFormat('it-IT', { weekday: 'short' });
+    const todaySerial = dateSerial(localDate());
+    const dayHeader = dates.map((serial) => {
+        const date = new Date(serial * 86400000 + 43200000);
+        return `<div class="calendar-day-heading ${serial === todaySerial ? 'today' : ''}" role="columnheader"><span>${escapeHtml(weekday.format(date).replace('.', ''))}</span><strong>${date.getUTCDate()}</strong></div>`;
+    }).join('');
+    const header = `<div class="calendar-timeline" style="--day-count:${dayCount}"><div class="calendar-timeline-header"><div class="calendar-room-heading" role="columnheader">CAMERA</div>${dayHeader}</div>`;
+    const rows = rooms.map(({ apartment, room }) => {
+        const bars = visibleBookings.flatMap((booking) => booking.camere
+            .filter((detail) => detail.camera.id === room.id)
+            .map((detail) => ({ booking, detail })))
+            .map(({ booking, detail }) => {
+                const bookingStart = dateSerial(booking.dataArrivo);
+                const bookingEnd = dateSerial(booking.dataPartenza);
+                const firstDay = Math.max(0, bookingStart - start);
+                const lastDay = Math.min(dayCount, bookingEnd - start);
+                if (lastDay <= firstDay) return '';
+                const guestName = `${booking.ospite.nome} ${booking.ospite.cognome}`;
+                const status = booking.stato.toLocaleLowerCase('it');
+                const range = `${formatDate(booking.dataArrivo)} - ${formatDate(booking.dataPartenza)}`;
+                return `<div class="calendar-booking ${status}" style="grid-column:${firstDay + 2} / ${lastDay + 2}" title="${escapeHtml(`${guestName} / ${range} / Prenotazione #${booking.id} / ${statusLabels[booking.stato] || booking.stato}`)}" aria-label="${escapeHtml(`${guestName}, ${range}, ${statusLabels[booking.stato] || booking.stato}`)}"><span>#${booking.id} ${escapeHtml(guestName)}</span><small>${escapeHtml(range)}</small></div>`;
+            }).join('');
+        const cells = dates.map((serial, index) => `<div class="calendar-cell ${serial === todaySerial ? 'today' : ''} ${!room.attiva ? 'inactive' : ''}" style="grid-column:${index + 2}" role="gridcell" aria-label="${escapeHtml(`${room.numero}, ${serialDate(serial)}`)}"></div>`).join('');
+        return `<div class="calendar-row" role="row"><div class="calendar-room-label" role="rowheader"><strong>${escapeHtml(apartment.nome)} / ${escapeHtml(room.numero)}</strong><span>${escapeHtml(typeLabels[room.tipo] || room.tipo)} / ${room.attiva ? `${room.capienzaMassima} ${room.capienzaMassima === 1 ? 'ospite' : 'ospiti'}` : 'Fuori servizio'}</span></div>${cells}${bars}</div>`;
+    }).join('');
+    byId('calendar-grid').innerHTML = `${header}${rows}</div>`;
+    refreshIcons();
 }
 
 function roomMarkup(room) {
@@ -159,7 +272,7 @@ async function toggleRoom(id) {
 }
 
 function setTab(view, focus = false) {
-    for (const name of ['catalog', 'bookings', 'management']) {
+    for (const name of ['catalog', 'bookings', 'calendar', 'management']) {
         const active = name === view;
         const tab = byId(`${name}-tab`);
         tab.classList.toggle('active', active);
@@ -169,6 +282,7 @@ function setTab(view, focus = false) {
         if (active && focus) tab.focus();
     }
     if (view === 'management') loadManagement();
+    if (view === 'calendar') loadCalendar();
 }
 
 function renderInventory() {
@@ -199,6 +313,7 @@ async function loadManagement() {
         renderInventory();
         renderGuests();
         renderCatalog();
+        renderCalendar();
     } catch (error) {
         showError('management-error', error.message);
     } finally {
@@ -327,10 +442,28 @@ async function loadBookings() {
     try {
         state.bookings = await api('/prenotazioni');
         renderBookings();
+        renderCalendar();
     } catch (error) {
         showError('bookings-error', error.message);
     } finally {
         byId('refresh-bookings').disabled = false;
+    }
+}
+
+async function loadCalendar() {
+    byId('refresh-calendar').disabled = true;
+    showError('calendar-error', '');
+    try {
+        const [apartments, bookings] = await Promise.all([api('/appartamenti'), api('/prenotazioni')]);
+        state.apartments = apartments;
+        state.bookings = bookings;
+        renderCalendar();
+    } catch (error) {
+        showError('calendar-error', error.message);
+        byId('calendar-grid').innerHTML = emptyState('Calendario non disponibile', 'Impossibile caricare camere e prenotazioni.', 'wifi-off');
+        refreshIcons();
+    } finally {
+        byId('refresh-calendar').disabled = false;
     }
 }
 
@@ -344,6 +477,7 @@ async function loadCatalog() {
         byId('apartment-filter').value = selectedFilter;
         byId('catalog-count').textContent = `${state.apartments.length} appartamenti / ${state.apartments.reduce((total, apartment) => total + apartment.camere.length, 0)} camere`;
         renderCatalog();
+        renderCalendar();
     } catch (error) {
         byId('global-error-text').textContent = error.message;
         byId('global-error').hidden = false;
@@ -383,6 +517,7 @@ async function submitBooking(event) {
         byId('booking-form').reset();
         renderSummary();
         renderBookings();
+        renderCalendar();
         setTab('bookings', true);
         toast(`Prenotazione #${booking.id} confermata. Totale: ${currency.format(booking.totale)}.`);
         await searchRooms();
@@ -403,6 +538,7 @@ async function cancelBooking() {
         state.bookings = state.bookings.map((existing) => existing.id === booking.id ? booking : existing);
         byId('cancel-dialog').close();
         renderBookings();
+        renderCalendar();
         toast(`Prenotazione #${booking.id} annullata.`);
         if (state.availableIds !== null) await searchRooms();
     } catch (error) {
@@ -434,12 +570,12 @@ byId('reset-filters').addEventListener('click', () => { byId('apartment-filter')
 byId('properties').addEventListener('click', (event) => { const button = event.target.closest('[data-room-id]'); if (button) toggleRoom(Number(button.dataset.roomId)); });
 byId('selected-rooms').addEventListener('click', (event) => { const button = event.target.closest('[data-remove-id]'); if (button) toggleRoom(Number(button.dataset.removeId)); });
 byId('selected-rooms').addEventListener('change', (event) => { const select = event.target.closest('[data-guests-id]'); if (select) { state.selected.get(Number(select.dataset.guestsId)).numeroOspiti = Number(select.value); renderSummary(); } });
-for (const view of ['catalog', 'bookings', 'management']) {
+for (const view of ['catalog', 'bookings', 'calendar', 'management']) {
     byId(`${view}-tab`).addEventListener('click', () => setTab(view));
     byId(`${view}-tab`).addEventListener('keydown', (event) => {
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
         event.preventDefault();
-        const views = ['catalog', 'bookings', 'management'];
+        const views = ['catalog', 'bookings', 'calendar', 'management'];
         const current = views.indexOf(view);
         const next = event.key === 'Home' ? 0 : event.key === 'End' ? views.length - 1
             : (current + (event.key === 'ArrowRight' ? 1 : views.length - 1)) % views.length;
@@ -524,6 +660,16 @@ for (const id of ['close-cancel', 'keep-booking']) byId(id).addEventListener('cl
 byId('cancel-dialog').addEventListener('cancel', (event) => { if (byId('confirm-cancel').disabled) event.preventDefault(); });
 byId('confirm-cancel').addEventListener('click', cancelBooking);
 byId('refresh-bookings').addEventListener('click', loadBookings);
+byId('refresh-calendar').addEventListener('click', loadCalendar);
+byId('calendar-previous').addEventListener('click', () => shiftCalendar(-1));
+byId('calendar-next').addEventListener('click', () => shiftCalendar(1));
+byId('calendar-today').addEventListener('click', () => { state.calendarDate = localDate(); renderCalendar(); });
+byId('calendar-date').addEventListener('change', (event) => { if (event.currentTarget.value) { state.calendarDate = event.currentTarget.value; renderCalendar(); } });
+byId('calendar-apartment').addEventListener('change', renderCalendar);
+document.querySelectorAll('[data-calendar-view]').forEach((button) => button.addEventListener('click', () => {
+    state.calendarView = button.dataset.calendarView;
+    renderCalendar();
+}));
 byId('retry-load').addEventListener('click', loadCatalog);
 byId('dismiss-toast').addEventListener('click', () => { byId('toast').hidden = true; });
 renderSummary();

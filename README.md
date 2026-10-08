@@ -20,7 +20,8 @@ Le API JSON rimangono disponibili, ad esempio http://localhost:8081/camere.
 
 La pagina usa HTML, CSS e JavaScript nella cartella `src/main/resources/static`.
 Permette di consultare gli appartamenti, filtrare le camere, cercare la disponibilita
-per date e ospiti e prenotare piu camere. La scheda Prenotazioni mostra lo storico
+per date e ospiti e prenotare piu camere. La scheda Calendario mostra l'occupazione
+giornaliera in vista mese, settimana o giorno; la scheda Prenotazioni mostra lo storico
 e permette di annullare un soggiorno, previa conferma.
 I dati e i controlli applicativi continuano a essere gestiti dalle API Spring Boot.
 Le fotografie sono illustrative; immagini Unsplash, font Google Fonts e icone Lucide
