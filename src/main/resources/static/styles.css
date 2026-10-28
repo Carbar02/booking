@@ -224,6 +224,20 @@ dialog::backdrop { background: #14261f80; }
 .form-stack textarea { width: 100%; min-height: 92px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 5px; color: var(--ink); resize: vertical; font: inherit; }
 .form-stack textarea:focus { outline: 2px solid var(--green); outline-offset: 2px; }
 .guest-table td:nth-child(2) { overflow-wrap: anywhere; }
+.chat-launcher { position: fixed; right: 24px; bottom: 24px; z-index: 5; display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 0 17px; border: 0; border-radius: 24px; background: var(--green); color: white; box-shadow: 0 4px 16px rgba(18, 48, 63, .22); font-weight: 600; }
+.chat-launcher:hover { background: var(--green-dark); }
+.chat-dialog { width: min(440px, calc(100% - 28px)); max-width: none; max-height: min(660px, calc(100dvh - 32px)); margin: auto 24px 24px auto; padding: 20px; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); box-shadow: 0 12px 48px rgba(18, 48, 63, .25); }
+.chat-dialog::backdrop { background: rgba(26, 39, 34, .35); }
+.chat-dialog .dialog-heading { margin-bottom: 12px; }
+.chat-privacy { margin-bottom: 14px; color: var(--muted); font-size: 11px; }
+.chat-messages { display: flex; flex-direction: column; gap: 10px; max-height: min(390px, 48dvh); min-height: 150px; padding: 3px 2px 14px; overflow-y: auto; }
+.chat-message { max-width: 90%; padding: 10px 12px; border-radius: 10px; background: #eef2ef; overflow-wrap: anywhere; white-space: pre-wrap; }
+.chat-message.user { align-self: flex-end; background: var(--green-light); }
+.chat-message.assistant { align-self: flex-start; }
+.chat-form { display: flex; align-items: flex-end; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.chat-form textarea { flex: 1; min-width: 0; min-height: 44px; max-height: 130px; padding: 10px 12px; resize: vertical; border: 1px solid var(--line); border-radius: 5px; color: var(--ink); font: inherit; }
+.chat-form textarea:focus { outline: 2px solid var(--green); outline-offset: 2px; }
+.chat-error { margin-top: 9px; color: var(--rose); font-size: 12px; }
 @keyframes appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 1100px) { .page, .header-inner { padding-left: 24px; padding-right: 24px; } .catalog-layout { grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; } .room-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .search-form { grid-template-columns: 1fr 1fr 1fr; } .search-button { grid-column: 1 / -1; justify-self: end; } }
 @media (max-width: 760px) { .header-inner { min-height: 70px; } .brand-location, .header-note { display: none; } .brand { font-size: 27px; } .page { padding-top: 26px; } h1 { font-size: 28px; } .page-heading { align-items: flex-start; flex-direction: column; gap: 10px; margin-bottom: 18px; } .catalog-layout { grid-template-columns: 1fr; } .booking-summary { position: static; order: -1; } .empty-selection { padding: 12px 0; } .summary-heading { margin-bottom: 6px; } .catalog-toolbar { flex-direction: column; align-items: stretch; gap: 12px; } .filters select { width: 100%; max-width: none; } .filters { min-width: 0; } .search-form { grid-template-columns: 1fr 1fr; gap: 12px; } .search-button { grid-column: auto; justify-self: stretch; padding-left: 9px; padding-right: 9px; font-size: 12px; } .room-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .page-footer { flex-direction: column; gap: 4px; } }

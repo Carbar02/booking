@@ -68,6 +68,7 @@ Gli identificativi vengono generati dal database: consultarli con `GET /camere`.
 | Metodo | Percorso | Risultato |
 |---|---|---|
 | GET | `/hello` | Controllo iniziale |
+| POST | `/chat` | Risposta informativa basata su RAG |
 | GET | `/appartamenti` | Appartamenti con le relative camere |
 | GET | `/camere` | Catalogo, comprese le camere fuori servizio |
 | GET | `/camere/disponibili` | Camere libere per periodo e capienza |
@@ -141,6 +142,36 @@ Gli endpoint `/gestione/**` non hanno ancora autenticazione o autorizzazione.
 Il progetto e didattico e va usato solo in locale: non pubblicare la porta 8081
 su una rete accessibile ad altri. Prima di usarlo online, proteggere inoltre
 gli endpoint di prenotazione, che restituiscono nome, email e telefono degli ospiti.
+
+## Chatbot informativo (RAG)
+
+Il pulsante "Chiedi al B&B" apre un chatbot che recupera i passaggi pertinenti
+da `src/main/resources/knowledge/booking-info.txt`, dal catalogo aggiornato e
+dai conteggi aggregati delle prenotazioni. Quando la domanda contiene due date
+nel formato `yyyy-MM-dd`, controlla anche la disponibilita effettiva delle camere.
+La ricerca supporta un numero di ospiti per camera; se omesso, usa 1.
+Il chatbot informa, ma non crea, modifica o annulla prenotazioni.
+
+Per generare le risposte viene usata l'API OpenAI. Configurare la chiave
+nell'ambiente PowerShell prima di avviare l'applicazione:
+
+```powershell
+$env:OPENAI_API_KEY = "inserire-la-propria-chiave"
+.\mvnw.cmd spring-boot:run
+```
+
+La variabile resta limitata alla sessione PowerShell corrente. In alternativa,
+`OPENAI_MODEL` (predefinito `gpt-4o-mini`) e `OPENAI_BASE_URL` (predefinito
+`https://api.openai.com/v1`) permettono di configurare modello e endpoint.
+Senza chiave il resto dell'applicazione continua a funzionare e `/chat` risponde
+con HTTP 503.
+
+La domanda, la cronologia recente della chat e i passaggi recuperati vengono
+inviati a OpenAI per generare la risposta. Il chatbot non legge né invia nomi,
+email, telefoni o dettagli individuali delle prenotazioni; usa solo i relativi
+conteggi aggregati e il risultato di disponibilita richiesto. Non inserire dati
+personali nelle domande. L'endpoint non ha autenticazione o limitazione d'uso:
+come il resto dell'applicazione, va usato solo in locale finche non viene protetto.
 
 Le prenotazioni nascono `CONFERMATA` e possono diventare `ANNULLATA`.
 `IN_ATTESA` e `COMPLETATA` sono valori previsti dal modello, ma senza un workflow

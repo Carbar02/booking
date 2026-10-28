@@ -1,0 +1,13 @@
+Booking B&B si trova a Firenze e gestisce prenotazioni di singole camere negli appartamenti Aurora e Giardino. Non è previsto l'affitto esclusivo di un appartamento intero.
+
+Le camere possono essere singole, doppie o familiari. La capienza, il prezzo per notte e lo stato di servizio dipendono dal catalogo aggiornato dell'applicazione.
+
+Per controllare la disponibilità servono data di arrivo, data di partenza e numero di ospiti per camera. Le date devono essere valide, nel formato yyyy-MM-dd, l'arrivo non può essere nel passato e la partenza deve essere successiva all'arrivo. La ricerca non riserva le camere.
+
+Il prezzo è per camera, non per persona. Il totale di una prenotazione è calcolato moltiplicando il prezzo concordato per camera e per il numero di notti.
+
+Una camera fuori servizio o già occupata nel periodo richiesto non è prenotabile. Il checkout non occupa una notte: un nuovo check-in nello stesso giorno è consentito.
+
+Le prenotazioni sono confermate alla creazione. L'annullamento conserva lo storico e libera le camere. Una richiesta con più camere viene accettata interamente oppure rifiutata.
+
+Il chatbot fornisce solo informazioni e non crea, modifica o annulla prenotazioni. I dati dei clienti non sono disponibili al chatbot.

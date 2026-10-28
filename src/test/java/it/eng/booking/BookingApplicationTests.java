@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import it.eng.booking.controller.BookingController;
+import it.eng.booking.controller.ChatbotController;
 import it.eng.booking.dto.CameraPrenotazioneRequest;
 import it.eng.booking.dto.CreaPrenotazioneRequest;
 import it.eng.booking.dto.OspiteRequest;
@@ -39,12 +40,16 @@ import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest(properties = {
         "spring.datasource.url=jdbc:h2:mem:booking-test;DB_CLOSE_DELAY=-1",
-        "spring.jpa.hibernate.ddl-auto=create-drop"
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "app.openai.api-key="
 })
 class BookingApplicationTests {
 
 	@Autowired
 	private BookingController bookingController;
+
+	@Autowired
+	private ChatbotController chatbotController;
 
 	@Autowired
 	private PrenotazioneService prenotazioneService;
@@ -73,7 +78,7 @@ class BookingApplicationTests {
 		prenotazioneRepository.deleteAll();
 		ospiteRepository.deleteAll();
 		camere = cameraRepository.findAllByOrderByIdAsc();
-		mockMvc = MockMvcBuilders.standaloneSetup(bookingController)
+		mockMvc = MockMvcBuilders.standaloneSetup(bookingController, chatbotController)
 				.setControllerAdvice(new GlobalExceptionHandler()).build();
 	}
 
@@ -89,6 +94,15 @@ class BookingApplicationTests {
 				.andExpect(jsonPath("$[0].numero").value("101"))
 				.andExpect(jsonPath("$[0].tipo").value("SINGOLA"))
 				.andExpect(jsonPath("$[0].appartamentoNome").value("Aurora"));
+	}
+
+	@Test
+	void chatbotReturnsConfigurationErrorWithoutApiKey() throws Exception {
+		mockMvc.perform(post("/chat").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"question\":\"Quanto costa una camera?\",\"history\":[]}"))
+				.andExpect(status().isServiceUnavailable())
+				.andExpect(jsonPath("$.detail").value(
+						"Chatbot non configurato: impostare la variabile OPENAI_API_KEY e riavviare l'applicazione."));
 	}
 
 	@Test

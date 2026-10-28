@@ -31,6 +31,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
     }
 
+    @ExceptionHandler(ChatbotException.class)
+    public ProblemDetail chatbotNonDisponibile(ChatbotException exception) {
+        return ProblemDetail.forStatusAndDetail(exception.getStatus(), exception.getMessage());
+    }
+
     @ExceptionHandler(CameraNonDisponibileException.class)
     public ProblemDetail cameraNonDisponibile(CameraNonDisponibileException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());

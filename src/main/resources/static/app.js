@@ -7,7 +7,7 @@ const photos = [
     'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=640&q=85',
     'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=640&q=85'
 ];
-const state = { apartments: [], bookings: [], guests: [], availableIds: null, selected: new Map(), searchVersion: 0, cancelId: null, editingApartmentId: null, editingRoomId: null, editingGuestId: null, calendarView: 'month', calendarDate: localDate(), submitting: false };
+const state = { apartments: [], bookings: [], guests: [], availableIds: null, selected: new Map(), searchVersion: 0, cancelId: null, editingApartmentId: null, editingRoomId: null, editingGuestId: null, calendarView: 'month', calendarDate: localDate(), submitting: false, chatHistory: [] };
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 const icon = (name) => `<i data-lucide="${name}"></i>`;
 const refreshIcons = () => window.lucide?.createIcons();
@@ -548,6 +548,45 @@ async function cancelBooking() {
     }
 }
 
+function appendChatMessage(role, content) {
+    const message = document.createElement('p');
+    message.className = `chat-message ${role}`;
+    message.textContent = content;
+    byId('chat-messages').append(message);
+    byId('chat-messages').scrollTop = byId('chat-messages').scrollHeight;
+}
+
+async function sendChatMessage(event) {
+    event.preventDefault();
+    const question = byId('chat-question').value.trim();
+    if (!question) return;
+
+    byId('chat-question').value = '';
+    byId('chat-error').hidden = true;
+    appendChatMessage('user', question);
+    byId('send-chat').disabled = true;
+    byId('chat-question').disabled = true;
+    byId('send-chat').querySelector('span').textContent = 'Invio...';
+    try {
+        const response = await api('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question, history: state.chatHistory.slice(-8) })
+        });
+        appendChatMessage('assistant', response.risposta);
+        state.chatHistory.push({ role: 'USER', content: question }, { role: 'ASSISTANT', content: response.risposta });
+        state.chatHistory = state.chatHistory.slice(-8);
+    } catch (error) {
+        byId('chat-error').textContent = error.message;
+        byId('chat-error').hidden = false;
+    } finally {
+        byId('chat-question').disabled = false;
+        byId('send-chat').disabled = false;
+        byId('send-chat').querySelector('span').textContent = 'Invia';
+        byId('chat-question').focus();
+    }
+}
+
 byId('arrival').min = localDate();
 byId('arrival').value = localDate(7);
 byId('departure').min = localDate(8);
@@ -672,6 +711,9 @@ document.querySelectorAll('[data-calendar-view]').forEach((button) => button.add
 }));
 byId('retry-load').addEventListener('click', loadCatalog);
 byId('dismiss-toast').addEventListener('click', () => { byId('toast').hidden = true; });
+byId('open-chat').addEventListener('click', () => byId('chat-dialog').showModal());
+byId('close-chat').addEventListener('click', () => byId('chat-dialog').close());
+byId('chat-form').addEventListener('submit', sendChatMessage);
 renderSummary();
 refreshIcons();
 loadCatalog();

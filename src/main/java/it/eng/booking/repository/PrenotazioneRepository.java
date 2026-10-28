@@ -17,6 +17,8 @@ public interface PrenotazioneRepository extends JpaRepository<Prenotazione, Long
 
     List<Prenotazione> findAllByOrderByIdAsc();
 
+    long countByStato(StatoPrenotazione stato);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select prenotazione from Prenotazione prenotazione where prenotazione.id = :id")
     Optional<Prenotazione> findByIdForUpdate(@Param("id") Long id);

@@ -86,6 +86,25 @@
         </section>
         <footer class="page-footer"><span>Booking B&amp;B</span><span>Appartamenti Aurora &amp; Giardino &middot; Firenze</span></footer>
     </main>
+    <button class="chat-launcher" id="open-chat" type="button" aria-haspopup="dialog" aria-controls="chat-dialog">
+        <i data-lucide="message-circle"></i><span>Chiedi al B&amp;B</span>
+    </button>
+    <dialog id="chat-dialog" class="chat-dialog" aria-labelledby="chat-title">
+        <div class="dialog-heading">
+            <div><p class="eyebrow">ASSISTENTE INFORMATIVO</p><h2 id="chat-title">Chiedi al B&amp;B</h2></div>
+            <button class="icon-button" id="close-chat" type="button" title="Chiudi" aria-label="Chiudi chat"><i data-lucide="x"></i></button>
+        </div>
+        <p class="chat-privacy">Le risposte usano la documentazione e i dati aggiornati di camere e disponibilità. Le domande vengono inviate a OpenAI: non inserire dati personali.</p>
+        <div class="chat-messages" id="chat-messages" aria-live="polite" aria-relevant="additions text">
+            <p class="chat-message assistant">Ciao! Posso aiutarti con camere, prezzi, disponibilità e regole di prenotazione. Per controllare le date, scrivile nel formato AAAA-MM-GG.</p>
+        </div>
+        <form class="chat-form" id="chat-form">
+            <label class="sr-only" for="chat-question">La tua domanda</label>
+            <textarea id="chat-question" name="question" rows="2" maxlength="1000" placeholder="Scrivi una domanda..." required></textarea>
+            <button class="button primary" id="send-chat" type="submit"><i data-lucide="send"></i><span>Invia</span></button>
+        </form>
+        <p class="chat-error" id="chat-error" role="alert" hidden></p>
+    </dialog>
     <dialog id="booking-dialog" aria-labelledby="booking-dialog-title">
         <div class="dialog-heading"><div><p class="eyebrow">NUOVO SOGGIORNO</p><h2 id="booking-dialog-title">Conferma la prenotazione</h2></div><button class="icon-button" id="close-booking" title="Chiudi" aria-label="Chiudi"><i data-lucide="x"></i></button></div>
         <div id="checkout-summary" class="checkout-summary"></div>
