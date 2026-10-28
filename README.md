@@ -4,6 +4,18 @@ Applicazione didattica Spring Boot 4.1.1, Java 25 e Maven.
 Si prenotano singole camere, anche piu camere in un'unica prenotazione.
 Non e previsto l'affitto esclusivo di un appartamento intero.
 
+## Esercizio Di Sicurezza
+
+Questa versione contiene due vulnerabilita intenzionali, lasciate attive.
+Usarla solo in un laboratorio locale isolato, con dati fittizi, mai in produzione.
+
+- **XSS persistente (CWE-79):** la descrizione salvata tramite le API di gestione
+  appartamenti viene inserita come HTML nel catalogo senza escaping. Un handler
+  HTML puo eseguire JavaScript nel browser di chi consulta il catalogo.
+- **Open redirect (CWE-601):** `GET /hello?redirect=https://example.org/training`
+  risponde con HTTP 302 verso la destinazione fornita, senza verificarne l'host.
+  Senza parametro, `/hello` mantiene la risposta originale.
+
 ## Avvio
 
 Da PowerShell, nella cartella del progetto:

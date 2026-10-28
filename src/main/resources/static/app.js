@@ -193,7 +193,7 @@ function renderCatalog() {
         if (!rooms.length) return '';
         return `<section class="property" aria-labelledby="apartment-${apartment.id}" style="animation-delay:${index * 60}ms">
             <div class="property-header"><figure class="property-photo"><img src="${photos[index % photos.length]}" alt="Interno di una camera, immagine illustrativa" width="640" height="376" ${index === 0 ? 'fetchpriority="high"' : 'loading="lazy"'}><figcaption>Immagine illustrativa</figcaption></figure>
-                <div class="property-info"><p class="property-number">APPARTAMENTO ${String(index + 1).padStart(2, '0')}</p><h2 id="apartment-${apartment.id}">${escapeHtml(apartment.nome)}</h2><p class="address">${icon('map-pin')}${escapeHtml(apartment.indirizzo)}</p><p class="property-description">${escapeHtml(apartment.descrizione)}</p></div></div>
+                <div class="property-info"><p class="property-number">APPARTAMENTO ${String(index + 1).padStart(2, '0')}</p><h2 id="apartment-${apartment.id}">${escapeHtml(apartment.nome)}</h2><p class="address">${icon('map-pin')}${escapeHtml(apartment.indirizzo)}</p><p class="property-description">${apartment.descrizione}</p></div></div>
             <div class="room-grid">${rooms.map(roomMarkup).join('')}</div></section>`;
     }).join('');
     byId('properties').innerHTML = sections || emptyState('Nessuna camera trovata', 'Nessun risultato per le date e i filtri selezionati.');

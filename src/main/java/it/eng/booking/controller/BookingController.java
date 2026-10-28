@@ -43,8 +43,11 @@ public class BookingController {
     }
 
     @GetMapping("/hello")
-    public String hello() {
-        return "Booking API funzionante!";
+    public ResponseEntity<String> hello(@RequestParam(required = false) String redirect) {
+        if (redirect != null) {
+            return ResponseEntity.status(302).location(URI.create(redirect)).build();
+        }
+        return ResponseEntity.ok("Booking API funzionante!");
     }
 
     @GetMapping("/camere")

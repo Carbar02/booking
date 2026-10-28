@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -84,6 +85,16 @@ class BookingApplicationTests {
 
 	@Test
 	void contextLoads() {
+	}
+
+	@Test
+	void securityExerciseHelloRedirectAcceptsExternalDestination() throws Exception {
+		mockMvc.perform(get("/hello"))
+				.andExpect(status().isOk())
+				.andExpect(content().string("Booking API funzionante!"));
+		mockMvc.perform(get("/hello").param("redirect", "https://example.org/training"))
+				.andExpect(status().isFound())
+				.andExpect(header().string("Location", "https://example.org/training"));
 	}
 
 	@Test
